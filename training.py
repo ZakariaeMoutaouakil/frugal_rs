@@ -90,7 +90,7 @@ def main():
         # Evaluate smoothed model after each epoch
         model.eval()
         for i, (inputs, labels) in enumerate(test_loader):
-            inputs, true_label = inputs.to(device), labels.to(device).item()
+            inputs, true_label = inputs.to(torch_device), labels.to(torch_device).item()
             smoothed_output = smoothed_predict(model, inputs, num_noise_samples, noise_sd)
             means = smoothed_output.mean(dim=0)
             predicted = argmax(means).item()
@@ -126,7 +126,7 @@ def main():
     df = DataFrame(results)
 
     # Save results to CSV
-    df.to_csv('smoothed_model_results.csv', index=False)
+    df.to_csv('logs/smoothed_model_results.csv', index=False)
 
     logger.info('Results saved to smoothed_model_results.csv')
 
