@@ -112,6 +112,8 @@ def main():
             })
 
             if i % log_freq == 0:
+                logger.debug("inputs: {}".format(inputs))
+                logger.debug("shape: {}".format(inputs.shape))
                 logger.debug("smoothed_output: {}".format(smoothed_output))
                 logger.debug("means: {}".format(means))
                 logger.debug("predicted: {}".format(predicted))
