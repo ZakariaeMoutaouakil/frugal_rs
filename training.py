@@ -38,6 +38,7 @@ def main():
     noise_sd = 0.12
     num_noise_samples = 100
     alpha = 0.001
+    log_freq = 1000
 
     logger = basic_logger('logs/training.log')
     results = []
@@ -73,7 +74,7 @@ def main():
 
             running_loss += loss.item()
 
-            if i % 100 == 99:
+            if i % log_freq == 0:
                 logger.debug(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 100:.3f}')
                 running_loss = 0.
 
@@ -110,7 +111,7 @@ def main():
                 'radius': certified_radius
             })
 
-            if i % 100 == 99:
+            if i % log_freq == 0:
                 logger.debug("smoothed_output: {}".format(smoothed_output))
                 logger.debug("means: {}".format(means))
                 logger.debug("predicted: {}".format(predicted))
