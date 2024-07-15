@@ -1,12 +1,15 @@
 import os
 from typing import Callable
+
+from numpy import floor
+from numpy.random import shuffle
 from pandas import DataFrame
 from scipy.stats import norm
 from torch import cuda, no_grad, device, save, randn_like, Tensor, nn, argmax, mean
 from torch.nn import CrossEntropyLoss
 from torch.nn.functional import softmax
 from torch.optim import SGD
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 
 from architectures import get_architecture
 from calculate_term import calculate_term
@@ -28,9 +31,8 @@ def smoothed_predict(model: nn.Module, x: Tensor, num_samples: int, noise_sd: fl
 
 def main():
     train_batch = 256
-    test_batch = 1
+    validation_batch = 1
     num_workers = 4
-    torch_device = device('cuda' if cuda.is_available() else 'cpu')
     lr = 0.1
     momentum = 0.9
     weight_decay = 1e-4
@@ -48,10 +50,23 @@ def main():
     os.makedirs(save_dir, exist_ok=True)
 
     train_dataset = get_dataset('train')
-    test_dataset = get_dataset('test')
-    train_loader = DataLoader(train_dataset, shuffle=True, batch_size=train_batch, num_workers=num_workers)
-    test_loader = DataLoader(test_dataset, shuffle=False, batch_size=test_batch, num_workers=num_workers)
 
+    # Create indices for splitting
+    train_size = len(train_dataset)
+    indices = list(range(train_size))
+    shuffle(indices)
+
+    # Calculate split sizes
+    split = int(floor(0.1 * train_size))  # 10% for validation
+
+    # Create Subset objects
+    train_set = Subset(train_dataset, indices[split:])
+    validation_set = Subset(train_dataset, indices[:split])
+
+    train_loader = DataLoader(train_set, shuffle=True, batch_size=train_batch, num_workers=num_workers)
+    validation_loader = DataLoader(validation_set, shuffle=False, batch_size=validation_batch, num_workers=num_workers)
+
+    torch_device = device('cuda' if cuda.is_available() else 'cpu')
     model = get_architecture(torch_device)
 
     criterion = CrossEntropyLoss().to(torch_device)
@@ -90,7 +105,7 @@ def main():
 
         # Evaluate smoothed model after each epoch
         model.eval()
-        for i, (inputs, labels) in enumerate(test_loader):
+        for i, (inputs, labels) in enumerate(validation_loader):
             inputs, true_label = inputs.to(torch_device), labels.to(torch_device).item()
             smoothed_output = smoothed_predict(model, inputs, num_noise_samples, noise_sd)
             means = smoothed_output.mean(dim=0)

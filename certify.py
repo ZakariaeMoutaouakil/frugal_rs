@@ -3,13 +3,13 @@ from typing import Callable, Tuple
 
 from pandas import DataFrame
 from scipy.stats import norm
-from torch import Tensor, softmax, nn, mean, device, cuda, load
+from torch import Tensor, nn, mean, device, cuda, load
+from torch.nn.functional import softmax
 from torch.utils.data import DataLoader
 
 from architectures import get_architecture
 from calculate_term import calculate_term
 from datasets import get_dataset
-from logging_config import basic_logger
 from training import smoothed_predict
 
 
@@ -46,13 +46,13 @@ def main() -> None:
     model = model.to(torch_device)
     model.eval()
 
-    train_dataset = get_dataset('train')
-    train_loader = DataLoader(train_dataset, shuffle=True, batch_size=1, num_workers=num_workers)
     results = []
-    logger = basic_logger('logs/certify.log')
 
-    for i, (image, label) in enumerate(train_loader, 0):
-        image, label = image.to(torch_device), label.to(torch_device).item()
+    test_dataset = get_dataset('test')
+    test_loader = DataLoader(test_dataset, shuffle=False, batch_size=1, num_workers=num_workers)
+
+    for i, (image, label) in enumerate(test_loader):
+        image, label = image.to(torch_device), label.to(torch_device)
         start_time = time()
         prediction, radius = certify(model, image, n0, n, noise_sd, alpha)
         end_time = time()
@@ -66,32 +66,7 @@ def main() -> None:
         })
 
         if i % print_freq == 0:
-            logger.debug(f"image: {image}")
-            logger.debug("shape: {}".format(image.shape))
-            logger.debug(f"label: {label}")
-            logger.debug(f"prediction: {prediction}")
-            logger.debug(f"certified_radius: {radius}")
-            logger.debug(f"time: {end_time - start_time:.4f}")
-
-    test_dataset = get_dataset('test')
-    test_loader = DataLoader(test_dataset, shuffle=False, batch_size=1, num_workers=num_workers)
-
-    for i, (image, label) in enumerate(test_loader):
-        image, label = image.to(torch_device), label.to(torch_device)
-        start_time = time()
-        prediction, radius = certify(model, image, n0, n, noise_sd, alpha)
-        end_time = time()
-        results.append({
-            'idx': i + len(train_dataset),
-            'label': label,
-            'predicted': prediction,
-            'correct': int(prediction == label),
-            'radius': radius,
-            'time': f"{end_time - start_time:.4f}"
-        })
-
-        if i % print_freq == 0:
-            print(f"Certified Radius: {radius:.4f}, Time: {end_time - start_time:.4f}")
+            print(f"{i} / {len(test_loader)}")
 
     # Create DataFrame from results
     df = DataFrame(results)
