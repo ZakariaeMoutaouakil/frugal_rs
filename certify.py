@@ -31,7 +31,6 @@ def certify(model: nn.Module, x: Tensor, n0: int, n: int, noise_sd: float, alpha
 
 
 def main() -> None:
-    torch_device = device('cuda' if cuda.is_available() else 'cpu')
     epochs = 5
     noise_sd = 0.12
     n0 = 10
@@ -40,6 +39,7 @@ def main() -> None:
     print_freq = 1000
     num_workers = 4
 
+    torch_device = device('cuda' if cuda.is_available() else 'cpu')
     model = get_architecture(torch_device)
     checkpoint = load('saved_models/model_epoch_' + str(epochs) + '.pth')
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -52,7 +52,7 @@ def main() -> None:
     test_loader = DataLoader(test_dataset, shuffle=False, batch_size=1, num_workers=num_workers)
 
     for i, (image, label) in enumerate(test_loader):
-        image, label = image.to(torch_device), label.to(torch_device)
+        image, label = image.to(torch_device), label.to(torch_device).item()
         start_time = time()
         prediction, radius = certify(model, image, n0, n, noise_sd, alpha)
         end_time = time()
@@ -66,13 +66,13 @@ def main() -> None:
         })
 
         if i % print_freq == 0:
-            print(f"{i} / {len(test_loader)}")
+            print(f"Processing the dataset: {i} / {len(test_loader)}")
 
     # Create DataFrame from results
     df = DataFrame(results)
 
     # Save results to CSV
-    df.to_csv('logs/certify.csv', index=False)
+    df.to_csv('logs/test_results.csv', index=False)
 
 
 if __name__ == "__main__":

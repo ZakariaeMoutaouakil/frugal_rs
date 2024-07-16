@@ -1,6 +1,6 @@
-import os
 from logging import Formatter, StreamHandler, getLogger, Logger, LogRecord, ERROR, INFO, DEBUG, WARNING, CRITICAL
 from logging.handlers import RotatingFileHandler
+from os import path, makedirs
 from typing import Dict, Any
 
 from colorama import Fore, Style, init
@@ -34,7 +34,7 @@ class ColorFormatter(Formatter):
         """
         log_color = self.COLORS.get(record.levelno, Fore.WHITE)
         levelname = f"{record.levelname:<8}"
-        record.msg = f"{log_color}{self.formatTime(record, self.datefmt)} - {levelname} - {record.msg}{Style.RESET_ALL}"
+        record.msg = f"{log_color}{levelname} - {record.msg}{Style.RESET_ALL}"
         if record.exc_info:
             record.exc_text = self.formatException(record.exc_info)
         return super().format(record)
@@ -57,14 +57,14 @@ def setup_logger(name: str, config: Dict[str, Any]) -> Logger:
         logger.setLevel(config['level'])
 
         # File handler (with rotation)
-        os.makedirs(os.path.dirname(config['log_file']), exist_ok=True)
+        makedirs(path.dirname(config['log_file']), exist_ok=True)
         file_handler = RotatingFileHandler(
             config['log_file'],
             maxBytes=config['max_file_size'],
             backupCount=config['backup_count']
         )
         file_handler.setLevel(config['level'])
-        file_format = Formatter('%(asctime)s - %(levelname)-8s - %(message)s')
+        file_format = Formatter('%(levelname)-8s : %(message)s')
         file_handler.setFormatter(file_format)
 
         # Console handler
@@ -113,7 +113,7 @@ def basic_logger(log_file: str) -> Logger:
 
 def main() -> None:
     # Default configuration
-    default_config: Dict[str, Any] = {
+    default_config: Dict[str, str | int] = {
         'level': DEBUG,
         'log_file': 'logs/app.log',
         'max_file_size': 5 * 1024 * 1024,  # 5 MB

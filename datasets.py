@@ -1,4 +1,4 @@
-from typing import *
+from typing import List
 
 from torch import nn, Tensor, tensor
 from torch.utils.data import Dataset

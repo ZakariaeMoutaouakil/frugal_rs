@@ -1,4 +1,4 @@
-import os
+from os import path, makedirs
 from typing import Callable
 
 from numpy import floor
@@ -47,7 +47,7 @@ def main():
 
     # Create a directory to save models if it doesn't exist
     save_dir = 'saved_models'
-    os.makedirs(save_dir, exist_ok=True)
+    makedirs(save_dir, exist_ok=True)
 
     train_dataset = get_dataset('train')
 
@@ -94,7 +94,7 @@ def main():
                 running_loss = 0.
 
         # Save the model after each epoch
-        save_path = os.path.join(save_dir, f'model_epoch_{epoch + 1}.pth')
+        save_path = path.join(save_dir, f'model_epoch_{epoch + 1}.pth')
         save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
@@ -118,7 +118,6 @@ def main():
             certified_radius = noise_sd * norm.ppf(p1) if 0.5 < p1 < 1 else 0.
 
             results.append({
-                'epoch': epoch + 1,
                 'idx': i,
                 'label': true_label,
                 'predicted': predicted,
@@ -138,15 +137,17 @@ def main():
                 logger.debug("p1: {}".format(p1))
                 logger.debug("certified_radius: {}".format(certified_radius))
 
+            # Create DataFrame from results
+            df = DataFrame(results)
+
+            # Save results to CSV
+            df.to_csv('logs/validation_results_epoch_' + str(epoch + 1) + '.csv', index=False)
+
+            logger.info('Results saved to logs/validation_results_epoch_' + str(epoch + 1) + '.csv')
+
+            results = []
+
     logger.info('Finished Training and Evaluation')
-
-    # Create DataFrame from results
-    df = DataFrame(results)
-
-    # Save results to CSV
-    df.to_csv('logs/smoothed_model_results.csv', index=False)
-
-    logger.info('Results saved to smoothed_model_results.csv')
 
 
 if __name__ == "__main__":
