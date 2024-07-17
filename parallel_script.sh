@@ -28,8 +28,8 @@ run_command() {
     --base_classifier \"$base_classifier_path\" \
     --temperature \"$temperature\" \
     --n \"$N\" \
-    --outfile_path_blaise \"$outfile_path_blaise\" \
-    --outfile_path_zack \"$outfile_path_zack\" \
+    --blaise_outfile \"$outfile_path_blaise\" \
+    --zack_outfile \"$outfile_path_zack\" \
     --log \"$log_path\""
 
     echo "$command"
