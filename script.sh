@@ -15,7 +15,7 @@ shift="blaise"
 for N in $(seq 100 10 1000)
 do
     outfile_path="$HOME/test_results/cifar10_smoothed/noise_$sigma_str/N_$N/$shift.csv"
-    log_path="$HOME/test_results/cifar10_smoothed/noise_$sigma_str/N_$N/log.log"
+    log_path="$HOME/test_results/cifar10_smoothed/noise_$sigma_str/N_$N/log_$shift.log"
 
     # Create necessary directories
     mkdir -p "$(dirname "$outfile_path")"
