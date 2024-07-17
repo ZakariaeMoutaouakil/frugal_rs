@@ -20,14 +20,14 @@ parser = ArgumentParser(description='Certify many examples')
 parser.add_argument("--base_classifier", type=str, help="path to saved pytorch model of base classifier",
                     required=True)
 parser.add_argument("--sigma", type=float, default=0.12, help="noise hyperparameter")
-parser.add_argument("--outfile", type=str, help="output file", required=True)
+parser.add_argument("--blaise_outfile", type=str, help="output file", required=True)
+parser.add_argument("--zack_outfile", type=str, help="output file", required=True)
 parser.add_argument("--temperature", type=float, default=1.0, help="softmax temperature")
 parser.add_argument("--max", type=int, default=1000, help="stop after this many examples")
 parser.add_argument("--n0", type=int, default=100)
 parser.add_argument("--n", type=int, help="number of samples to use", required=True)
 parser.add_argument("--alpha", type=float, default=0.001, help="failure probability")
 parser.add_argument("--log", type=str, help="Location of log file", required=True)
-parser.add_argument("--shift", type=str, choices=["blaise", "zack"], required=True)
 parser.add_argument("--num_workers", type=int, default=4)
 parser.add_argument("--print_freq", type=int, default=100)
 args = parser.parse_args()
@@ -43,8 +43,8 @@ logger.info(formatted_args)
 
 
 def certify(model: nn.Module, x: Tensor, n0: int, n: int, noise_sd: float, alpha: float, temperature: float,
-            shift: str, debug: bool) \
-        -> Tuple[int, float]:
+            debug: bool) \
+        -> Tuple[int, float, float]:
     normalize_fn: Callable[[Tensor], Tensor] = lambda y: softmax(y / temperature, dim=1)
     first_predictions = smoothed_predict(model, x, n0, noise_sd, normalize_fn)
     first_means = mean(first_predictions, dim=0)
@@ -56,12 +56,12 @@ def certify(model: nn.Module, x: Tensor, n0: int, n: int, noise_sd: float, alpha
     term = calculate_term(predicted_class_scores, alpha)
     predicted_class_score = mean(predicted_class_scores).item()
     p1 = predicted_class_score - term
+    certified_radius_blaise = noise_sd * norm.ppf(p1) if 0.5 < p1 < 1 else 0.
 
-    if shift == 'zack':
-        p1_ = calculate_shift(predicted_class_scores, alpha)
-        p1 = max(p1, p1_)
+    p1_ = calculate_shift(predicted_class_scores, alpha)
+    p1 = max(p1, p1_)
+    certified_radius_zack = noise_sd * norm.ppf(p1) if 0.5 < p1 < 1 else 0.
 
-    certified_radius = noise_sd * norm.ppf(p1) if 0.5 < p1 < 1 else 0.
     if debug:
         logger.debug(f"normalize_fn: {normalize_fn}")
         logger.debug(f"first_predictions: {first_predictions}")
@@ -70,7 +70,7 @@ def certify(model: nn.Module, x: Tensor, n0: int, n: int, noise_sd: float, alpha
         logger.debug(f"second_predictions: {second_predictions}")
         logger.debug(f"predicted_class_scores: {predicted_class_scores}")
         logger.debug(f"p1: {p1}")
-    return predicted, certified_radius
+    return predicted, certified_radius_blaise, certified_radius_zack
 
 
 def main() -> None:
@@ -81,7 +81,8 @@ def main() -> None:
     model = model.to(torch_device)
     model.eval()
 
-    results = []
+    results_blaise = []
+    results_zack = []
 
     test_dataset = get_dataset('test')
     test_loader = DataLoader(test_dataset, shuffle=False, batch_size=1, num_workers=args.num_workers)
@@ -92,15 +93,26 @@ def main() -> None:
 
         image, label = image.to(torch_device), label.to(torch_device).item()
         start_time = time()
-        prediction, radius = certify(model=model, x=image, n0=args.n0, n=args.n, noise_sd=args.sigma, alpha=args.alpha,
-                                     temperature=args.temperature, shift=args.shift, debug=(i % args.print_freq == 0))
+        prediction, radius_blaise, radius_zack = certify(model=model, x=image, n0=args.n0, n=args.n,
+                                                         noise_sd=args.sigma, alpha=args.alpha,
+                                                         temperature=args.temperature,
+                                                         debug=(i % args.print_freq == 0))
         end_time = time()
-        results.append({
+        results_blaise.append({
             'idx': i,
             'label': label,
             'predicted': prediction,
             'correct': int(prediction == label),
-            'radius': radius,
+            'radius': radius_blaise,
+            'time': f"{end_time - start_time:.4f}"
+        })
+
+        results_zack.append({
+            'idx': i,
+            'label': label,
+            'predicted': prediction,
+            'correct': int(prediction == label),
+            'radius': radius_zack,
             'time': f"{end_time - start_time:.4f}"
         })
 
@@ -108,14 +120,19 @@ def main() -> None:
         logger.debug(f"label: {label}")
         logger.debug(f"predicted: {prediction}")
         logger.debug(f"correct: {int(prediction == label)}")
-        logger.debug(f"radius: {radius}")
+        logger.debug(f"radius: {radius_blaise:.4f}")
+        logger.debug(f"radius: {radius_zack:.4f}")
         logger.debug(f"time: {end_time - start_time:.4f}")
 
     # Create DataFrame from results
-    df = DataFrame(results)
+    df_blaise = DataFrame(results_blaise)
+    df_zack = DataFrame(results_zack)
 
     # Save results to CSV
-    df.to_csv(args.outfile, index=False)
+    df_blaise.to_csv(args.outfile_blaise, index=False)
+    df_zack.to_csv(args.outfile_zack, index=False)
+
+    logger.info(f"Saved results to {args.outfile_blaise} and {args.outfile_zack}")
 
 
 if __name__ == "__main__":

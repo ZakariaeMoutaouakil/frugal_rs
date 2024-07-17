@@ -8,27 +8,28 @@ export LC_NUMERIC="C"
 export PYTHONPATH="$HOME/frugal_rs"
 
 sigma=0.12
-temperature=10
+temperature=2
 sigma_str=$(printf "%.2f" "$sigma")
 base_classifier_path="$HOME/models/cifar10/resnet110/noise_$sigma_str/checkpoint.pth.tar"
-shift="zack"
 
 # Function to run the command for a single N value
 run_command() {
     N=$1
-    outfile_path="$HOME/test_results/cifar10_smooth_50_steps/noise_$sigma_str/N_$N/$shift-$temperature.csv"
-    log_path="$HOME/test_results/cifar10_smooth_50_steps/noise_$sigma_str/N_$N/log_$shift-$temperature.log"
+    outfile_path_blaise="$HOME/test_results/cifar10_smooth_50_steps/noise_$sigma_str/N_$N/blaise_-$temperature.csv"
+    outfile_path_zack="$HOME/test_results/cifar10_smooth_50_steps/noise_$sigma_str/N_$N/zack_-$temperature.csv"
+    log_path="$HOME/test_results/cifar10_smooth_50_steps/noise_$sigma_str/N_$N/log-$temperature.log"
 
     # Create necessary directories
-    mkdir -p "$(dirname "$outfile_path")"
+    mkdir -p "$(dirname "outfile_path_blaise")"
+    mkdir -p "$(dirname "outfile_path_zack")"
     mkdir -p "$(dirname "$log_path")"
 
     command="python certify_comparison.py \
     --base_classifier \"$base_classifier_path\" \
     --temperature \"$temperature\" \
     --n \"$N\" \
-    --shift \"$shift\" \
-    --outfile \"$outfile_path\" \
+    --outfile_path_blaise \"$outfile_path_blaise\" \
+    --outfile_path_zack \"$outfile_path_zack\" \
     --log \"$log_path\""
 
     echo "$command"
@@ -42,7 +43,7 @@ max_jobs=32
 for N in $(seq 100 50 1000)
 do
     # Run the command in the background
-    run_command $N &
+    run_command "$N" &
 
     # Limit the number of parallel jobs
     if (( $(jobs -p | wc -l) >= max_jobs )); then
