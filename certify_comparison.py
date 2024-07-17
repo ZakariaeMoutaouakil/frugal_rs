@@ -29,7 +29,7 @@ parser.add_argument("--alpha", type=float, default=0.001, help="failure probabil
 parser.add_argument("--log", type=str, help="Location of log file", required=True)
 parser.add_argument("--shift", type=str, choices=["blaise", "zack"], required=True)
 parser.add_argument("--num_workers", type=int, default=4)
-parser.add_argument("--print_freq", type=int, default=1000)
+parser.add_argument("--print_freq", type=int, default=100)
 args = parser.parse_args()
 
 logger = basic_logger(args.log)
@@ -104,8 +104,12 @@ def main() -> None:
             'time': f"{end_time - start_time:.4f}"
         })
 
-        if i % args.print_freq == 0:
-            print(f"Processing the dataset: {i} / {len(test_loader)}")
+        logger.debug(f"idx: {i}")
+        logger.debug(f"label: {label}")
+        logger.debug(f"predicted: {prediction}")
+        logger.debug(f"correct: {int(prediction == label)}")
+        logger.debug(f"radius: {radius}")
+        logger.debug(f"time: {end_time - start_time:.4f}")
 
     # Create DataFrame from results
     df = DataFrame(results)
