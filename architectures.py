@@ -12,6 +12,6 @@ def get_architecture(torch_device: device) -> nn.Module:
     :param torch_device: The device to which the model should be moved
     :return: a Pytorch module
     """
-    model = resnet(depth=20, num_classes=get_num_classes()).to(torch_device)
+    model = resnet(depth=110, num_classes=get_num_classes()).to(torch_device)
     normalize_layer = get_normalize_layer().to(torch_device)
     return nn.Sequential(normalize_layer, model).to(torch_device)

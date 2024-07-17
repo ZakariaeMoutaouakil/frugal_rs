@@ -5,7 +5,7 @@ from torch import Tensor, var
 
 def calculate_term(vector: Tensor, alpha: float) -> float:
     """
-    Calculate the term given by the formula in the image.
+    Calculate the term in the Bernstein formula.
 
     Args:
     vector (torch.Tensor): Input vector
