@@ -120,8 +120,8 @@ def main() -> None:
         logger.debug(f"label: {label}")
         logger.debug(f"predicted: {prediction}")
         logger.debug(f"correct: {int(prediction == label)}")
-        logger.debug(f"radius: {radius_blaise:.4f}")
-        logger.debug(f"radius: {radius_zack:.4f}")
+        logger.debug(f"radius_blaise: {radius_blaise:.4f}")
+        logger.debug(f"radius_zack: {radius_zack:.4f}")
         logger.debug(f"time: {end_time - start_time:.4f}")
 
     # Create DataFrame from results
@@ -129,10 +129,10 @@ def main() -> None:
     df_zack = DataFrame(results_zack)
 
     # Save results to CSV
-    df_blaise.to_csv(args.outfile_blaise, index=False)
-    df_zack.to_csv(args.outfile_zack, index=False)
+    df_blaise.to_csv(args.blaise_outfile, index=False)
+    df_zack.to_csv(args.zack_outfile, index=False)
 
-    logger.info(f"Saved results to {args.outfile_blaise} and {args.outfile_zack}")
+    logger.info(f"Saved results to {args.blaise_outfile} and {args.zack_outfile}")
 
 
 if __name__ == "__main__":
