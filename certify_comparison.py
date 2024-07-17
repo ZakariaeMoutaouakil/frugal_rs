@@ -75,8 +75,8 @@ def certify(model: nn.Module, x: Tensor, n0: int, n: int, noise_sd: float, alpha
 
 def main() -> None:
     torch_device = device('cuda' if cuda.is_available() else 'cpu')
-    model = get_architecture(torch_device)
     checkpoint = load(args.base_classifier, map_location=torch_device)
+    model = get_architecture(torch_device)
     model.load_state_dict(checkpoint['state_dict'])
     model = model.to(torch_device)
     model.eval()

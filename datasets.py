@@ -1,6 +1,6 @@
 from typing import List
 
-from torch import nn, Tensor, tensor
+from torch import nn, tensor, cuda
 from torch.utils.data import Dataset
 from torchvision import transforms, datasets
 
@@ -40,12 +40,12 @@ def _cifar10(split: str) -> Dataset:
 
 class NormalizeLayer(nn.Module):
     """Standardize the channels of a batch of images by subtracting the dataset mean
-    and dividing by the dataset standard deviation.
+      and dividing by the dataset standard deviation.
 
-    In order to certify radii in original coordinates rather than standardized coordinates, we
-    add the Gaussian noise _before_ standardizing, which is why we have standardization be the first
-    layer of the classifier rather than as a part of preprocessing as is typical.
-    """
+      In order to certify radii in original coordinates rather than standardized coordinates, we
+      add the Gaussian noise _before_ standardizing, which is why we have standardization be the first
+      layer of the classifier rather than as a part of preprocessing as is typical.
+      """
 
     def __init__(self, means: List[float], sds: List[float]):
         """
@@ -53,16 +53,11 @@ class NormalizeLayer(nn.Module):
         :param sds: the channel standard deviations
         """
         super(NormalizeLayer, self).__init__()
-        self.register_buffer('means', tensor(means))
-        self.register_buffer('sds', tensor(sds))
+        self.means = tensor(means).to(device="cuda" if cuda.is_available() else "cpu")
+        self.sds = tensor(sds).to(device="cuda" if cuda.is_available() else "cpu")
 
-    def forward(self, input_tensor: Tensor):
-        device = input_tensor.device
-        means = self.means.to(device)
-        sds = self.sds.to(device)
-
-        batch_size, num_channels, height, width = input_tensor.shape
-        means = means.view(1, num_channels, 1, 1).expand(batch_size, num_channels, height, width)
-        sds = sds.view(1, num_channels, 1, 1).expand(batch_size, num_channels, height, width)
-
-        return (input_tensor - means) / sds
+    def forward(self, inputs: tensor):
+        (batch_size, num_channels, height, width) = inputs.shape
+        means = self.means.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
+        sds = self.sds.repeat((batch_size, height, width, 1)).permute(0, 3, 1, 2)
+        return (inputs - means) / sds
