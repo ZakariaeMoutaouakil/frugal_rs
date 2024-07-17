@@ -53,13 +53,13 @@ def certify(model: nn.Module, x: Tensor, n0: int, n: int, noise_sd: float, alpha
     second_predictions = smoothed_predict(model, x, n, noise_sd, normalize_fn)
     predicted_class_scores = second_predictions[:, predicted]
 
-    p1 = 0.
-    if shift == 'blaise':
-        term = calculate_term(predicted_class_scores, alpha)
-        predicted_class_score = mean(predicted_class_scores).item()
-        p1 = predicted_class_score - term
-    elif shift == 'zack':
-        p1 = calculate_shift(predicted_class_scores, alpha)
+    term = calculate_term(predicted_class_scores, alpha)
+    predicted_class_score = mean(predicted_class_scores).item()
+    p1 = predicted_class_score - term
+
+    if shift == 'zack':
+        p1_ = calculate_shift(predicted_class_scores, alpha)
+        p1 = max(p1, p1_)
 
     certified_radius = noise_sd * norm.ppf(p1) if 0.5 < p1 < 1 else 0.
     if debug:

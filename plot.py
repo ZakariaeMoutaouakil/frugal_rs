@@ -56,20 +56,20 @@ def plot_multiple_files(dfs: List[DataFrame], labels: List[str], save_path: str 
 
 def main() -> None:
     # Load the dataset
-    df_dir = '/home/pc/Projects/private_data/data/logs/'
-    epochs = 5
+    for i in range(100, 1050, 50):
+        if i in [400,500,250,650]:
+            continue
+        df_dir_blaise = f'/home/pc/Projects/private_data/test_results/cifar10_smoothed/noise_0.12/N_{i}/blaise-1.0.csv'
+        df_dir_zack = f'/home/pc/Projects/private_data/test_results/cifar10_smooth_50_steps/noise_0.12/N_{i}/zack-1.0.csv'
 
-    validation_df = read_csv(df_dir + 'smoothed_model_results.csv', delimiter=',')
-    df_filtered = validation_df[validation_df['epoch'] == epochs]
-    validation_df = df_filtered.drop(columns=['epoch'])
+        validation_df = read_csv(df_dir_blaise, delimiter=',')
+        test_df = read_csv(df_dir_zack, delimiter=',')
 
-    test_df = read_csv(df_dir + 'certify.csv', delimiter=',')
+        dfs = [validation_df, test_df]
+        labels = [f'Blaise_N={i}', f'Zack_N={i}']
+        save_path = f'/tmp/plot_{i}.png'
 
-    dfs = [validation_df, test_df]
-    labels = ['Validation', 'Test']
-    save_path = 'plot.png'
-
-    plot_multiple_files(dfs, labels, save_path)
+        plot_multiple_files(dfs, labels, save_path)
 
 
 if __name__ == '__main__':
