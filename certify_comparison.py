@@ -10,7 +10,7 @@ from torch.nn.functional import softmax
 from torch.utils.data import DataLoader
 
 from architectures import get_architecture
-from bernstein.calculate_shift import calculate_shift
+from bernstein_optimized.calculate_shift import calculate_shift
 from calculate_term import calculate_term
 from datasets import get_dataset
 from logging_config import basic_logger
