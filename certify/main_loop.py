@@ -21,7 +21,7 @@ parser.add_argument("--dataset", choices=DATASETS, help="dataset", required=True
 parser.add_argument("--max_inferences", type=int, default=10000, help="max number of inferences")
 args = parser.parse_args()
 
-logger = basic_logger(args.log)
+logger = basic_logger(args.log_file)
 args_dict = vars(args)
 
 # Pretty print the dictionary with json.dumps
