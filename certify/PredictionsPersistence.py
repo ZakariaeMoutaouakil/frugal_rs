@@ -64,8 +64,11 @@ class PredictionsPersistence:
                 new_max = max(new_count, f[f"{self.title}_predictions"].shape[1] + self.max_num_predictions)
                 f[f"{self.title}_predictions"].resize((self.num_examples, new_max, self.num_classes))
 
+            # Move predictions to CPU and convert to numpy
+            predictions_np = predictions.cpu().numpy()
+
             # Save the new predictions
-            f[f"{self.title}_predictions"][example_index, current_count:new_count] = predictions.numpy()
+            f[f"{self.title}_predictions"][example_index, current_count:new_count] = predictions_np
 
             # Update the count
             f[f"{self.title}_counts"][example_index] = new_count
