@@ -8,69 +8,56 @@ export LC_NUMERIC="C"
 export PYTHONPATH="$HOME/frugal_rs"
 export IMAGENET_DIR="$HOME/imagenet"
 
-# Define the usage function
 usage() {
-    echo "Usage: $0 --num_samples <number> --sigma <number>" >&2
+    echo "Usage: $0 --num_samples <number> --sigma <number> (-i | -c)" >&2
     exit 1
 }
 
-# Parse the command-line arguments
-options=$(getopt -o '' -l 'num_samples:,sigma:' -- "$@")
+# Parse long options
+options=$(getopt -o 'ic' -l 'num_samples:,sigma:' -- "$@")
 [ $? -eq 0 ] || usage
 eval set -- "$options"
 
-# Read the options
+# Initialize variables
+num_samples=""
+sigma=""
+option=""
+
+# Parse all options
 while true; do
     case "$1" in
         --num_samples) num_samples=$2; shift 2;;
         --sigma) sigma=$2; shift 2;;
+        -i)
+            if [ "$option" = "c" ]; then
+                echo "Error: Options -i and -c are mutually exclusive." >&2
+                exit 1
+            fi
+            option="i"; shift;;
+        -c)
+            if [ "$option" = "i" ]; then
+                echo "Error: Options -i and -c are mutually exclusive." >&2
+                exit 1
+            fi
+            option="c"; shift;;
         --) shift; break;;
         *) usage;;
     esac
 done
 
-# Check if both options are present and are numbers
+# Check if required options are present and valid
 if ! [[ "$num_samples" =~ ^[0-9]+$ ]] || ! [[ "$sigma" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
     echo "Error: num_samples and sigma must be valid numbers" >&2
     usage
 fi
 
-# Convert sigma to a string with two decimal places
-sigma_str=$(printf "%.2f" "$sigma")
-
-# Initialize the option flag as empty
-option=""
-
-# Using getopts to handle the options
-while getopts ":ic" opt; do
-  case $opt in
-    i)
-      if [ "$option" = "c" ]; then
-        echo "Error: Options -i and -c are mutually exclusive."
-        exit 1
-      fi
-      option="i"
-      ;;
-    c)
-      if [ "$option" = "i" ]; then
-        echo "Error: Options -i and -c are mutually exclusive."
-        exit 1
-      fi
-      option="c"
-      ;;
-    \?)
-      echo "Invalid option: -$OPTARG" >&2
-      exit 1
-      ;;
-  esac
-done
-
-# Check if no option was set
 if [ -z "$option" ]; then
-  echo "Error: One of -i or -c must be specified."
-  exit 1
+    echo "Error: One of -i or -c must be specified." >&2
+    usage
 fi
 
+# Convert sigma to a string with two decimal places
+sigma_str=$(printf "%.2f" "$sigma")
 
 # Set the base_classifier_path based on the option
 if [ "$option" = "i" ]; then
