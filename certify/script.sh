@@ -72,7 +72,7 @@ output_file="$HOME/test_results/${dataset}_${sigma_str}.h5"
 log_file="$HOME/test_results/${dataset}_${sigma_str}.log"
 
 python -m certify.main_loop --base_classifier "$base_classifier_path" --sigma "$sigma" --outfile "$output_file" \
-       --log_file "$log_file" --num_samples "$num_samples"
+       --log_file "$log_file" --num_samples "$num_samples" --dataset "$dataset"
 
 # Deactivate the virtual environment
 deactivate
