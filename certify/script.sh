@@ -63,9 +63,23 @@ sigma_str=$(printf "%.2f" "$sigma")
 if [ "$option" = "i" ]; then
   base_classifier_path="$HOME/models/imagenet/resnet50/noise_$sigma_str/checkpoint.pth.tar"
   dataset="imagenet"
+  # Check if the variable is in the set of allowed values
+  if [[ "$sigma_str" == "0.25" || "$sigma_str" == "0.50" || "$sigma_str" == "1.00" ]]; then
+      :
+  else
+      echo "Error: sigma must be one of 0.25, 0.50, or 1.00." >&2
+      exit 1
+  fi
 elif [ "$option" = "c" ]; then
   base_classifier_path="$HOME/models/cifar10/resnet110/noise_$sigma_str/checkpoint.pth.tar"
   dataset="cifar10"
+  # Check if the variable is in the set of allowed values
+  if [[ "$sigma_str" == "0.12" || "$sigma_str" == "0.25" || "$sigma_str" == "0.50" || "$sigma_str" == "1.00" ]]; then
+      :
+  else
+      echo "Error: sigma must be one of 0.12, 0.25, 0.50, or 1.00." >&2
+      exit 1
+  fi
 fi
 
 output_file="$HOME/test_results/${dataset}_${sigma_str}.h5"
