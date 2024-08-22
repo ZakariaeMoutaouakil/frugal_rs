@@ -60,10 +60,13 @@ def main():
     persistence.first_time()
 
     early_stop = False
-
     try:
         for i, (image, _) in enumerate(test_loader):
             if early_stop:
+                break
+
+            if i >= args.max_inferences:
+                logger.info(f"Reached maximum number of inferences ({args.max_inferences}). Stopping.")
                 break
 
             try:
@@ -74,7 +77,12 @@ def main():
             except KeyboardInterrupt:
                 logger.info("Keyboard interrupt detected. Finishing current iteration...")
                 early_stop = True
+            except Exception as e:
+                logger.error(f"Error processing image {i}: {str(e)}")
+                continue
 
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {str(e)}")
     finally:
         logger.info("Finished processing. Cleaning up...")
 
