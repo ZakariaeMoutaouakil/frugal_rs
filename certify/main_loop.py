@@ -1,6 +1,8 @@
 from argparse import ArgumentParser
 from json import dumps
 
+from h5py import File
+from numpy import max, nonzero
 from torch import nn, Tensor, no_grad, randn_like, device, cuda, load
 from torch.utils.data import DataLoader
 
@@ -55,13 +57,25 @@ def main():
     test_loader = DataLoader(test_dataset, shuffle=False, batch_size=1, num_workers=args.num_workers)
 
     num_classes = get_num_classes(args.dataset)
-    persistence = PredictionsPersistence(f"{args.dataset}_{args.sigma}", args.outfile, args.num_samples,
+    persistence = PredictionsPersistence(f"{args.dataset}_{args.sigma:.2f}", args.outfile, args.num_samples,
                                          len(test_dataset), num_classes, logger)
-    persistence.first_time()
+    start_index = 0
+    try:
+        persistence.first_time()
+        logger.info("Starting from the beginning of the dataset.")
+    except FileExistsError:
+        logger.info("Existing file found. Determining last processed example...")
+        with File(args.outfile, 'r') as f:
+            counts = f[f"{args.dataset}_{args.sigma:.2f}_counts"][:]
+            start_index = max(nonzero(counts)) + 1
+        logger.debug(f"Continuing from example index {start_index}")
 
     early_stop = False
     try:
         for i, (image, _) in enumerate(test_loader):
+            if i < start_index:
+                continue
+
             if early_stop:
                 break
 
