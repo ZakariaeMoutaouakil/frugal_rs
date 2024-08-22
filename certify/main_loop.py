@@ -59,11 +59,26 @@ def main():
                                          len(test_dataset), num_classes, logger)
     persistence.first_time()
 
-    for i, (image, _) in enumerate(test_loader):
-        image = image.to(torch_device)
-        logits = smoothed_logits(model, image, args.num_samples, args.sigma)
-        logger.debug(f"Predictions: {logits}")
-        persistence.save_predictions(logits, i)
+    early_stop = False
+
+    try:
+        for i, (image, _) in enumerate(test_loader):
+            if early_stop:
+                break
+
+            try:
+                image = image.to(torch_device)
+                logits = smoothed_logits(model, image, args.num_samples, args.sigma)
+                logger.debug(f"Predictions: {logits}")
+                persistence.save_predictions(logits, i)
+            except KeyboardInterrupt:
+                logger.info("Keyboard interrupt detected. Finishing current iteration...")
+                early_stop = True
+
+    finally:
+        logger.info("Finished processing. Cleaning up...")
+
+    logger.info("Script completed.")
 
 
 if __name__ == "__main__":
