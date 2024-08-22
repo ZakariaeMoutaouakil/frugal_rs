@@ -34,7 +34,7 @@ def _cifar10(split: str) -> Dataset:
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor()
         ]))
-    elif split == "test":
+    elif split == "testing":
         return datasets.CIFAR10("./dataset_cache", train=False, download=True, transform=transforms.ToTensor())
 
 

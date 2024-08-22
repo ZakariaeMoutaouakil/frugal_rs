@@ -84,7 +84,7 @@ def main() -> None:
     results_blaise = []
     results_zack = []
 
-    test_dataset = get_dataset('test')
+    test_dataset = get_dataset('testing')
     test_loader = DataLoader(test_dataset, shuffle=False, batch_size=1, num_workers=args.num_workers)
 
     for i, (image, label) in enumerate(test_loader):

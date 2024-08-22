@@ -1,3 +1,4 @@
+import os
 from typing import List
 
 from matplotlib.pyplot import figure, ylabel, plot, legend, grid, savefig, show, xlabel, title
@@ -32,7 +33,7 @@ def process_file(df: DataFrame):
     return unique_radii, certified_accuracies  # Returning unique radii and certified accuracies
 
 
-def plot_multiple_files(dfs: List[DataFrame], labels: List[str], save_path: str = None) -> None:
+def plot_multiple_files(dfs: List[DataFrame], labels: List[str], title_name: str = None, save_path: str = None) -> None:
     """Plot certified accuracy curves from multiple files in the same figure."""
     figure(figsize=(12, 8))  # Creating a new figure with specified size
 
@@ -43,7 +44,8 @@ def plot_multiple_files(dfs: List[DataFrame], labels: List[str], save_path: str 
 
     xlabel('Radius (r)')  # Setting the label for x-axis
     ylabel('Certified Accuracy')  # Setting the label for y-axis
-    title('Certified Accuracy in Terms of Radius')  # Setting the title of the plot
+    title('Certified Accuracy in Terms of Radius') if not title_name else title(
+        title_name)  # Setting the title of the plot
     legend()  # Displaying legend
     grid(False)  # Removing the grid lines from the plot
 
@@ -55,22 +57,90 @@ def plot_multiple_files(dfs: List[DataFrame], labels: List[str], save_path: str 
 
 
 def main() -> None:
-    # Load the dataset
-    for i in range(100, 1050, 50):
-        if i in [400,500,250,650]:
-            continue
-        df_dir_blaise = f'/home/pc/Projects/private_data/test_results/cifar10_smoothed/noise_0.12/N_{i}/blaise-1.0.csv'
-        df_dir_zack = f'/home/pc/Projects/private_data/test_results/cifar10_smooth_50_steps/noise_0.12/N_{i}/zack-1.0.csv'
+    for N in range(100, 1050, 50):
+        for sigma in [0.12, 0.25, 0.50]:
+            for temperature in [0.1, 1, 2]:
+                try:
+                    df_dir_blaise = f'/home/pc/Projects/private_data/test_results/cifar10_smooth_50_steps/noise_{sigma:.2f}/N_{N}/blaise_-{temperature}.csv'
+                    df_dir_zack = f'/home/pc/Projects/private_data/test_results/cifar10_smooth_50_steps/noise_{sigma:.2f}/N_{N}/zack_-{temperature}.csv'
 
-        validation_df = read_csv(df_dir_blaise, delimiter=',')
-        test_df = read_csv(df_dir_zack, delimiter=',')
+                    df_blaise = read_csv(df_dir_blaise, delimiter=',')
+                    df_zack = read_csv(df_dir_zack, delimiter=',')
 
-        dfs = [validation_df, test_df]
-        labels = [f'Blaise_N={i}', f'Zack_N={i}']
-        save_path = f'/tmp/plot_{i}.png'
+                    dfs = [df_blaise, df_zack]
+                    labels = [f'Bernstein', f'New Method']
+                    save_path = f'/tmp/plots/sigma_{sigma}/temperature_{temperature}/plot_{N}.png'
 
-        plot_multiple_files(dfs, labels, save_path)
+                    # Extract the directory path
+                    directory_path = os.path.dirname(save_path)
+
+                    # Create the directory path recursively if it doesn't exist
+                    if not os.path.exists(directory_path):
+                        os.makedirs(directory_path)
+
+                    title = f'Certified Accuracy in Terms of Radius for N={N}, σ={sigma}, temperature={temperature}'
+                    plot_multiple_files(dfs, labels, title, save_path)
+
+                    print(f"Saved plot for N={N}, σ={sigma}, temperature={temperature}")
+
+                except Exception as e:
+                    print(f"Failed for N={N}, σ={sigma}, temperature={temperature}")
+
+    for N in range(100, 800, 100):
+        try:
+            df_dir_blaise = f'/home/pc/Projects/private_data/test_results/cifar10_smoothed/noise_0.12/N_{N}/blaise-1.0.csv'
+            df_dir_zack = f'/home/pc/Projects/private_data/test_results/cifar10_smoothed/noise_0.12/N_{N}/zack-1.0.csv'
+
+            df_blaise = read_csv(df_dir_blaise, delimiter=',')
+            df_zack = read_csv(df_dir_zack, delimiter=',')
+
+            dfs = [df_blaise, df_zack]
+            labels = [f'Bernstein', f'New Method']
+            save_path = f'/tmp/plots/sigma_{0.12}/temperature_{1}/plot_{N}.png'
+
+            # Extract the directory path
+            directory_path = os.path.dirname(save_path)
+
+            # Create the directory path recursively if it doesn't exist
+            if not os.path.exists(directory_path):
+                os.makedirs(directory_path)
+
+            title = f'Certified Accuracy in Terms of Radius for N={N}, σ={0.12}, temperature={1}'
+            plot_multiple_files(dfs, labels, title, save_path)
+
+            print(f"Saved plot for N={N}")
+
+        except Exception as e:
+            print(f"Failed for N={N}")
+
+def main2():
+    for N in range(20, 210, 10):
+        try:
+            df_ref_path = f'/home/pc/Projects/private_data/test_results/cifar10/noise_0.12/N_{N}/certification_output.tsv'
+            df_new_path = f'/home/pc/Projects/private_data/test_results/cifar10/noise_0.12/N_{N}/transform_output.tsv'
+
+            df_ref_path = read_csv(df_ref_path, delimiter='\t')
+            df_new_path = read_csv(df_new_path, delimiter='\t')
+
+            dfs = [df_ref_path, df_new_path]
+            labels = [f'Clopper Pearson', f'New Method']
+            save_path = f'/tmp/plots/sigma_{0.12}/plot_{N}.png'
+
+            # Extract the directory path
+            directory_path = os.path.dirname(save_path)
+
+            # Create the directory path recursively if it doesn't exist
+            if not os.path.exists(directory_path):
+                os.makedirs(directory_path)
+
+            title = f'Certified Accuracy in Terms of Radius for N={N}'
+            plot_multiple_files(dfs, labels, title, save_path)
+
+            print(f"Saved plot for N={N}")
+
+        except Exception as e:
+            print(f"Failed for N={N}")
 
 
 if __name__ == '__main__':
-    main()
+    main2()
