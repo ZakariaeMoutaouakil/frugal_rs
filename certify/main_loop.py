@@ -3,7 +3,7 @@ from json import dumps
 from time import time
 
 from h5py import File
-from numpy import max, nonzero
+from numpy import int32, where, zeros
 from torch import nn, Tensor, no_grad, randn_like, device, cuda, load
 from torch.utils.data import DataLoader
 
@@ -60,46 +60,53 @@ def main():
     num_classes = get_num_classes(args.dataset)
     persistence = PredictionsPersistence(f"{args.dataset}_{args.sigma:.2f}", args.outfile, args.num_samples,
                                          len(test_dataset), num_classes, logger)
-    start_index = 0
+
     try:
         persistence.first_time()
         logger.info("Starting from the beginning of the dataset.")
+        counts = zeros(len(test_dataset), dtype=int32)
     except FileExistsError:
-        logger.info("Existing file found. Determining last processed example...")
+        logger.info("Existing file found. Determining examples that need more inferences...")
         with File(args.outfile, 'r') as f:
             counts = f[f"{args.dataset}_{args.sigma:.2f}_counts"][:]
-            start_index = max(nonzero(counts)) + 1
-        logger.debug(f"Continuing from example index {start_index}")
+
+    # Find examples that need more inferences
+    unfulfilled_indices = where(counts < args.num_samples)[0]
+    logger.debug(f"Found {len(unfulfilled_indices)} examples that need more inferences.")
 
     early_stop = False
+
     try:
         for i, (image, _) in enumerate(test_loader):
-            if i < start_index:
+            if i not in unfulfilled_indices:
                 continue
 
             if early_stop:
                 break
 
-            if i >= args.max_inferences:
-                logger.info(f"Reached maximum number of inferences ({args.max_inferences}). Stopping.")
-                break
-
             try:
                 image = image.to(torch_device)
+                # Calculate how many more inferences we need
+                num_inferences_needed = args.num_samples - counts[i]
                 start_time = time()
-                logits = smoothed_logits(model, image, args.num_samples, args.sigma)
+                logits = smoothed_logits(model, image, num_inferences_needed, args.sigma)
                 logger.debug(f"Predictions: {logits}")
+                logger.debug(f"Processing example {i}. Adding {num_inferences_needed} inferences. "
+                             f"Predictions shape: {logits.shape}")
                 logger.debug(f"Example {i} took {time() - start_time:.2f} seconds.")
                 persistence.save_predictions(logits, i)
+
             except KeyboardInterrupt:
                 logger.info("Keyboard interrupt detected. Finishing current iteration...")
                 early_stop = True
+
             except Exception as e:
                 logger.error(f"Error processing image {i}: {str(e)}")
                 continue
 
     except Exception as e:
         logger.error(f"An unexpected error occurred: {str(e)}")
+
     finally:
         logger.info("Finished processing. Cleaning up...")
 
