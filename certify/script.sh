@@ -87,6 +87,9 @@ fi
 output_file="$HOME/test_results/new/${dataset}_${sigma_str}.h5"
 log_file="$HOME/test_results/new/${dataset}_${sigma_str}.log"
 
+mkdir -p "$(dirname "$output_file")"
+mkdir -p "$(dirname "$log_file")"
+
 python -m certify.main_loop --base_classifier "$base_classifier_path" --sigma "$sigma" --outfile "$output_file" \
        --log_file "$log_file" --num_samples "$num_samples" --dataset "$dataset" --max_inferences "$max_inferences"
 
