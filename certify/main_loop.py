@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from json import dumps
+from time import time
 
 from h5py import File
 from numpy import max, nonzero
@@ -85,8 +86,10 @@ def main():
 
             try:
                 image = image.to(torch_device)
+                start_time = time()
                 logits = smoothed_logits(model, image, args.num_samples, args.sigma)
                 logger.debug(f"Predictions: {logits}")
+                logger.debug(f"Example {i} took {time() - start_time:.2f} seconds.")
                 persistence.save_predictions(logits, i)
             except KeyboardInterrupt:
                 logger.info("Keyboard interrupt detected. Finishing current iteration...")
