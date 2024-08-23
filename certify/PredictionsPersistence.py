@@ -1,8 +1,8 @@
 from logging import Logger
 from pathlib import Path
 
-import h5py
-import numpy as np
+from h5py import File
+from numpy import float16, int32, float32
 from torch import Tensor, device, from_numpy
 
 
@@ -17,18 +17,18 @@ class PredictionsPersistence:
         self.logger = logger
 
     def first_time(self) -> None:
-        with h5py.File(self.output_file, 'x') as f:
+        with File(self.output_file, 'x') as f:
             # Create a dataset for storing predictions
             f.create_dataset(f"{self.title}_predictions",
                              shape=(self.num_examples, self.max_num_predictions, self.num_classes),
-                             dtype=np.float32,
+                             dtype=float32 if self.num_classes <= 10 else float16,
                              chunks=True,
                              maxshape=(self.num_examples, None, self.num_classes))
 
             # Create a dataset for storing the count of predictions per example
             f.create_dataset(f"{self.title}_counts",
                              shape=(self.num_examples,),
-                             dtype=np.int32,
+                             dtype=int32,
                              chunks=True)
 
             # Initialize all counts to 0
@@ -37,11 +37,11 @@ class PredictionsPersistence:
         self.logger.info(f"Created initial predictions dataset at {self.output_file}")
 
     def get_num_predictions(self, example_index: int) -> int:
-        with h5py.File(self.output_file, 'r') as f:
+        with File(self.output_file, 'r') as f:
             return f[f"{self.title}_counts"][example_index]
 
     def load_predictions(self, example_index: int, torch_device: device) -> Tensor:
-        with h5py.File(self.output_file, 'r') as f:
+        with File(self.output_file, 'r') as f:
             count = f[f"{self.title}_counts"][example_index]
             if count == 0:
                 raise ValueError(f"No predictions found for example index {example_index}")
@@ -55,7 +55,7 @@ class PredictionsPersistence:
         if predictions.dim() != 2 or predictions.shape[1] != self.num_classes:
             raise ValueError(f"Expected predictions shape (n, {self.num_classes}), got {predictions.shape}")
 
-        with h5py.File(self.output_file, 'r+') as f:
+        with File(self.output_file, 'r+') as f:
             current_count = f[f"{self.title}_counts"][example_index]
             new_count = current_count + len(predictions)
 

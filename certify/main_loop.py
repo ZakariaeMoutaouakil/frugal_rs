@@ -58,8 +58,9 @@ def main():
     test_loader = DataLoader(test_dataset, shuffle=False, batch_size=1, num_workers=args.num_workers)
 
     num_classes = get_num_classes(args.dataset)
-    persistence = PredictionsPersistence(f"{args.dataset}_{args.sigma:.2f}", args.outfile, args.num_samples,
-                                         len(test_dataset), num_classes, logger)
+    persistence = PredictionsPersistence(title=f"{args.dataset}_{args.sigma:.2f}", output_file=args.outfile,
+                                         max_num_predictions=args.max_inferences, num_examples=len(test_dataset),
+                                         num_classes=num_classes, logger=logger)
 
     try:
         persistence.first_time()

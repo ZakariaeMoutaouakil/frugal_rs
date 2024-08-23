@@ -63,6 +63,7 @@ sigma_str=$(printf "%.2f" "$sigma")
 if [ "$option" = "i" ]; then
   base_classifier_path="$HOME/models/imagenet/resnet50/noise_$sigma_str/checkpoint.pth.tar"
   dataset="imagenet"
+  max_inferences=1000
   # Check if the variable is in the set of allowed values
   if [[ "$sigma_str" == "0.25" || "$sigma_str" == "0.50" || "$sigma_str" == "1.00" ]]; then
       :
@@ -73,6 +74,7 @@ if [ "$option" = "i" ]; then
 elif [ "$option" = "c" ]; then
   base_classifier_path="$HOME/models/cifar10/resnet110/noise_$sigma_str/checkpoint.pth.tar"
   dataset="cifar10"
+  max_inferences=10000
   # Check if the variable is in the set of allowed values
   if [[ "$sigma_str" == "0.12" || "$sigma_str" == "0.25" || "$sigma_str" == "0.50" || "$sigma_str" == "1.00" ]]; then
       :
@@ -82,11 +84,11 @@ elif [ "$option" = "c" ]; then
   fi
 fi
 
-output_file="$HOME/test_results/${dataset}_${sigma_str}.h5"
-log_file="$HOME/test_results/${dataset}_${sigma_str}.log"
+output_file="$HOME/test_results/new/${dataset}_${sigma_str}.h5"
+log_file="$HOME/test_results/new/${dataset}_${sigma_str}.log"
 
 python -m certify.main_loop --base_classifier "$base_classifier_path" --sigma "$sigma" --outfile "$output_file" \
-       --log_file "$log_file" --num_samples "$num_samples" --dataset "$dataset"
+       --log_file "$log_file" --num_samples "$num_samples" --dataset "$dataset" --max_inferences "$max_inferences"
 
 # Deactivate the virtual environment
 deactivate
