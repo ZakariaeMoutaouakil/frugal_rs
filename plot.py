@@ -64,11 +64,13 @@ def plot_multiple_files(dfs: List[DataFrame], labels: List[str], title_name: str
         show()  # Displaying the plot
 
 
-map = {
+name_map = {
     'bernstein_bonferroni': 'Bernstein + Bonferroni',
     'bernstein': 'Bernstein',
     'sequence': 'CS',
     'sequence_bonferroni': 'CS + Bonferroni',
+    'cp': 'CP + Bonferroni',
+    'dichotomy': 'Dichotomy',
 }
 
 
@@ -95,7 +97,7 @@ def main():
         if radius == 'second':
             continue
 
-        first_labels.append(map[method])
+        first_labels.append(name_map[method])
 
     plot_multiple_files([read_csv(f, delimiter=',') for f in first_paths], first_labels, first_title,
                         os.path.join(args.dir, 'first.png'))
@@ -117,7 +119,7 @@ def main():
         if radius == 'first':
             continue
 
-        second_labels.append(map[method])
+        second_labels.append(name_map[method])
 
     plot_multiple_files([read_csv(f, delimiter=',') for f in second_paths], second_labels, second_title,
                         os.path.join(args.dir, 'second.png'))
