@@ -2,6 +2,6 @@
 import h5py
 
 file = h5py.File('/home/pc/Projects/private_data/test_results/cifar10_0.50.h5', 'r')
-predictions = file['cifar10_0.5_predictions'][0]
+predictions = file['cifar10_0.50_predictions'][160]
 
 print(predictions)

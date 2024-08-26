@@ -1,9 +1,17 @@
 import os
+from argparse import ArgumentParser
+from os.path import splitext
+from time import time
 from typing import List
 
 from matplotlib.pyplot import figure, ylabel, plot, legend, grid, savefig, show, xlabel, title
 from numpy import sort, append
 from pandas import DataFrame, read_csv
+
+parser = ArgumentParser(description='Transform dataset')
+parser.add_argument("--dir", type=str, help="results directory", required=True)
+parser.add_argument("--out", type=str, help="output directory", required=True)
+args = parser.parse_args()
 
 
 def process_file(df: DataFrame):
@@ -44,8 +52,8 @@ def plot_multiple_files(dfs: List[DataFrame], labels: List[str], title_name: str
 
     xlabel('Radius (r)')  # Setting the label for x-axis
     ylabel('Certified Accuracy')  # Setting the label for y-axis
-    title('Certified Accuracy in Terms of Radius') if not title_name else title(
-        title_name)  # Setting the title of the plot
+    # Setting the title of the plot
+    title('Certified Accuracy in Terms of Radius') if not title_name else title(title_name)
     legend()  # Displaying legend
     grid(False)  # Removing the grid lines from the plot
 
@@ -56,91 +64,67 @@ def plot_multiple_files(dfs: List[DataFrame], labels: List[str], title_name: str
         show()  # Displaying the plot
 
 
-def main() -> None:
-    for N in range(100, 1050, 50):
-        for sigma in [0.12, 0.25, 0.50]:
-            for temperature in [0.1, 1, 2]:
-                try:
-                    df_dir_blaise = f'/home/pc/Projects/private_data/test_results/cifar10_smooth_50_steps/noise_{sigma:.2f}/N_{N}/blaise_-{temperature}.csv'
-                    df_dir_zack = f'/home/pc/Projects/private_data/test_results/cifar10_smooth_50_steps/noise_{sigma:.2f}/N_{N}/zack_-{temperature}.csv'
+map = {
+    'bernstein_bonferroni': 'Bernstein + Bonferroni',
+    'bernstein': 'Bernstein',
+    'sequence': 'CS',
+    'sequence_bonferroni': 'CS + Bonferroni',
+}
 
-                    df_blaise = read_csv(df_dir_blaise, delimiter=',')
-                    df_zack = read_csv(df_dir_zack, delimiter=',')
 
-                    dfs = [df_blaise, df_zack]
-                    labels = [f'Bernstein', f'New Method']
-                    save_path = f'/tmp/plots/sigma_{sigma}/temperature_{temperature}/plot_{N}.png'
+def main():
+    log_file_name = splitext([f for f in os.listdir(args.dir) if f.endswith('.log')][0])[0]
+    dataset_type = log_file_name.split('_')[0]
+    dataset = 'Cifar10' if dataset_type == 'cifar10' else 'Imagenet'
+    sigma = log_file_name.split('_')[1]
 
-                    # Extract the directory path
-                    directory_path = os.path.dirname(save_path)
+    first_title = f'Certified Accuracy in Terms of Radius for {dataset} with σ={sigma}'
+    first_paths = [os.path.join(args.dir, f) for f in os.listdir(args.dir) if f.endswith('first.csv')]
+    first_labels = []
+    for file_path in first_paths:
+        # Remove the extension
+        base_name = os.path.splitext(os.path.basename(file_path))[0]
 
-                    # Create the directory path recursively if it doesn't exist
-                    if not os.path.exists(directory_path):
-                        os.makedirs(directory_path)
+        # Split into components
+        parts = base_name.split('_')
 
-                    title = f'Certified Accuracy in Terms of Radius for N={N}, σ={sigma}, temperature={temperature}'
-                    plot_multiple_files(dfs, labels, title, save_path)
+        # Combine the first and last parts accordingly
+        method = '_'.join(parts[2:-1])
+        radius = parts[-1]
 
-                    print(f"Saved plot for N={N}, σ={sigma}, temperature={temperature}")
+        if radius == 'second':
+            continue
 
-                except Exception as e:
-                    print(f"Failed for N={N}, σ={sigma}, temperature={temperature}")
+        first_labels.append(map[method])
 
-    for N in range(100, 800, 100):
-        try:
-            df_dir_blaise = f'/home/pc/Projects/private_data/test_results/cifar10_smoothed/noise_0.12/N_{N}/blaise-1.0.csv'
-            df_dir_zack = f'/home/pc/Projects/private_data/test_results/cifar10_smoothed/noise_0.12/N_{N}/zack-1.0.csv'
+    plot_multiple_files([read_csv(f, delimiter=',') for f in first_paths], first_labels, first_title,
+                        os.path.join(args.dir, 'first.png'))
 
-            df_blaise = read_csv(df_dir_blaise, delimiter=',')
-            df_zack = read_csv(df_dir_zack, delimiter=',')
+    second_title = f'Certified Accuracy in Terms of Radius for {dataset} with σ={sigma}'
+    second_paths = [os.path.join(args.dir, f) for f in os.listdir(args.dir) if f.endswith('second.csv')]
+    second_labels = []
+    for file_path in second_paths:
+        # Remove the extension
+        base_name = os.path.splitext(os.path.basename(file_path))[0]
 
-            dfs = [df_blaise, df_zack]
-            labels = [f'Bernstein', f'New Method']
-            save_path = f'/tmp/plots/sigma_{0.12}/temperature_{1}/plot_{N}.png'
+        # Split into components
+        parts = base_name.split('_')
 
-            # Extract the directory path
-            directory_path = os.path.dirname(save_path)
+        # Combine the first and last parts accordingly
+        method = '_'.join(parts[2:-1])
+        radius = parts[-1]
 
-            # Create the directory path recursively if it doesn't exist
-            if not os.path.exists(directory_path):
-                os.makedirs(directory_path)
+        if radius == 'first':
+            continue
 
-            title = f'Certified Accuracy in Terms of Radius for N={N}, σ={0.12}, temperature={1}'
-            plot_multiple_files(dfs, labels, title, save_path)
+        second_labels.append(map[method])
 
-            print(f"Saved plot for N={N}")
-
-        except Exception as e:
-            print(f"Failed for N={N}")
-
-def main2():
-    for N in range(20, 210, 10):
-        try:
-            df_ref_path = f'/home/pc/Projects/private_data/test_results/cifar10/noise_0.12/N_{N}/certification_output.tsv'
-            df_new_path = f'/home/pc/Projects/private_data/test_results/cifar10/noise_0.12/N_{N}/transform_output.tsv'
-
-            df_ref_path = read_csv(df_ref_path, delimiter='\t')
-            df_new_path = read_csv(df_new_path, delimiter='\t')
-
-            dfs = [df_ref_path, df_new_path]
-            labels = [f'Clopper Pearson', f'New Method']
-            save_path = f'/tmp/plots/sigma_{0.12}/plot_{N}.png'
-
-            # Extract the directory path
-            directory_path = os.path.dirname(save_path)
-
-            # Create the directory path recursively if it doesn't exist
-            if not os.path.exists(directory_path):
-                os.makedirs(directory_path)
-
-            title = f'Certified Accuracy in Terms of Radius for N={N}'
-            plot_multiple_files(dfs, labels, title, save_path)
-
-            print(f"Saved plot for N={N}")
-
-        except Exception as e:
-            print(f"Failed for N={N}")
+    plot_multiple_files([read_csv(f, delimiter=',') for f in second_paths], second_labels, second_title,
+                        os.path.join(args.dir, 'second.png'))
 
 
 if __name__ == '__main__':
-    main2()
+    start_time = time()
+    main()
+    end_time = time()
+    print(f"Total time: {end_time - start_time:.4f}" + " seconds")

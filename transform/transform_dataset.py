@@ -5,6 +5,7 @@ from time import time
 from typing import List, Dict
 
 from h5py import File
+from numpy import clip
 from pandas import DataFrame
 from scipy.stats import norm
 from torch import device, mean, from_numpy, set_printoptions
@@ -81,6 +82,8 @@ def main() -> None:
     quantile_function = gaussian_quantile_approximation(args.order)
     maximum = quantile_function(1) - quantile_function(0)
 
+    global_time = time()
+
     for i, (_, label) in enumerate(test_loader):
         if i >= last_nonzero_index:
             break
@@ -110,12 +113,13 @@ def main() -> None:
         logger.debug(f"normalized_difference_tensor: {normalized_difference_tensor}")
 
         ## First Radius
-
+        logger.info(f"First Radius")
         # Bernstein
         start_time = time()
         normalized_bernstein_term = calculate_term(vector=normalized_difference_tensor, alpha=args.alpha)
-        bernstein_term = 2 * normalized_bernstein_term - 1
-        bernstein_lower_bound = mean(difference_tensor).item() - bernstein_term
+        normalized_bernstein_lb = mean(normalized_difference_tensor).item() - normalized_bernstein_term
+        normalized_bernstein_lb = clip(normalized_bernstein_lb, 0, 1)
+        bernstein_lower_bound = 2 * normalized_bernstein_lb - 1
         end_time = time()
         results_bernstein_first.append({
             'idx': i,
@@ -125,6 +129,7 @@ def main() -> None:
             'radius': max(0., bernstein_lower_bound),
             'time': f"{end_time - start_time:.4f}"
         })
+        logger.info("results_bernstein_first")
         logger.debug(results_bernstein_first[-1])
 
         # Bernstein + Bonferroni
@@ -143,6 +148,7 @@ def main() -> None:
             'radius': max(0., bernstein_bonferroni_lower_bound),
             'time': f"{end_time - start_time:.4f}"
         })
+        logger.info("results_bernstein_bonferroni_first")
         logger.debug(results_bernstein_bonferroni_first[-1])
 
         # Sequence
@@ -158,6 +164,7 @@ def main() -> None:
             'radius': max(0., sequence_lower_bound),
             'time': f"{end_time - start_time:.4f}"
         })
+        logger.info("results_sequence_first")
         logger.debug(results_sequence_first[-1])
 
         # Sequence + Bonferroni
@@ -174,10 +181,11 @@ def main() -> None:
             'radius': max(0., sequence_bonferroni_lb),
             'time': f"{end_time - start_time:.4f}"
         })
+        logger.info("results_sequence_bonferroni_first")
         logger.debug(results_sequence_bonferroni_first[-1])
 
         ## Second Radius
-
+        logger.info(f"Second Radius")
         # Bernstein + Bonferroni
         start_time = time()
         predicted_term_second = calculate_term(vector=predicted_tensor, alpha=args.alpha / 2)
@@ -195,12 +203,12 @@ def main() -> None:
             'radius': max(0., bernstein_bonferroni_lower_bound_second),
             'time': f"{end_time - start_time:.4f}"
         })
+        logger.info("results_bernstein_bonferroni_second")
         logger.debug(results_bernstein_bonferroni_second[-1])
 
         # Sequence
         start_time = time()
-        predicted_class_lb_term = calculate_shift(x=predicted_tensor, alpha_0=args.alpha / 2)
-        predicted_class_lb = mean(predicted_tensor).item() - predicted_class_lb_term
+        predicted_class_lb = calculate_shift(x=predicted_tensor, alpha_0=args.alpha / 2)
 
         if predicted_class_lb >= 1 / 2:
             predicted_quantiles = apply_function_to_tensor(x=predicted_tensor, func=quantile_function)
@@ -219,13 +227,14 @@ def main() -> None:
                 'radius': max(0., sequence_lower_bound_second),
                 'time': f"{end_time - start_time:.4f}"
             })
+            logger.info("results_sequence_second >= 1/2")
             logger.debug(results_sequence_second[-1])
         else:
             predicted_sequence_lb_second = calculate_shift(x=predicted_tensor, alpha_0=args.alpha / 2)
             second_sequence_up_second = calculate_shift_upper(x=second_tensor, alpha_0=args.alpha / 2)
             sequence_bonferroni_lb_second = norm.ppf(predicted_sequence_lb_second) - norm.ppf(second_sequence_up_second)
             end_time = time()
-            results_sequence_bonferroni_second.append({
+            results_sequence_second.append({
                 'idx': i,
                 'label': label,
                 'predicted': predicted,
@@ -233,6 +242,8 @@ def main() -> None:
                 'radius': max(0., sequence_bonferroni_lb_second),
                 'time': f"{end_time - start_time:.4f}"
             })
+            logger.info("results_sequence_second < 1/2")
+            logger.debug(results_sequence_second[-1])
 
         # Sequence + Bonferroni
         start_time = time()
@@ -248,6 +259,8 @@ def main() -> None:
             'radius': max(0., sequence_bonferroni_lb_second),
             'time': f"{end_time - start_time:.4f}"
         })
+        logger.info("results_sequence_bonferroni_second")
+        logger.debug(results_sequence_bonferroni_second[-1])
 
     df_bernstein_first = DataFrame(results_bernstein_first)
     df_bernstein_bonferroni_first = DataFrame(results_bernstein_bonferroni_first)
@@ -273,6 +286,7 @@ def main() -> None:
                                          index=False)
 
     logger.info(f"Saved results to {args.outdir} directory")
+    logger.info("Done in {:.4f}s".format(time() - global_time))
 
 
 if __name__ == "__main__":
