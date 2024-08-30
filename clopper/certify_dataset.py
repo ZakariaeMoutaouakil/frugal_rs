@@ -8,7 +8,7 @@ from h5py import File
 from pandas import DataFrame
 from scipy.stats import norm
 from statsmodels.stats.proportion import proportion_confint
-from torch import device, from_numpy
+from torch import device, from_numpy, set_printoptions
 from torch.cuda import is_available as cuda_is_available
 from torch.utils.data import DataLoader
 
@@ -34,6 +34,8 @@ args_dict = vars(args)
 
 # Pretty print the dictionary with json.dumps
 formatted_args = dumps(args_dict, indent=4)
+
+set_printoptions(threshold=20)
 
 
 def main() -> None:

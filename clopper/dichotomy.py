@@ -9,7 +9,7 @@ from clopper.objective_function import objective_function
 
 def dichotomy(x: Tuple[int, int, int], alpha: float, left: float, right: float,
               coefficients: Tuple[Tuple[int, int, int, int], ...], h: Callable[[float], float],
-              tolerance: float = 1e-2) -> float:
+              tolerance: float = 1e-1) -> float:
     n = sum(x)
     observation = h(x[0] / n) - h(x[1] / n)
 

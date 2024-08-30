@@ -28,6 +28,7 @@ def hyperopt_optimization(objective: Callable[[float, float], float], alpha: flo
     fmin(fn=lambda x: objective(x['p0'], x['p1']),  # Changed this line
          space=space,
          algo=tpe.suggest,
+         timeout=60,
          max_evals=1000,
          trials=trials,
          early_stop_fn=create_stop_fn(alpha))
