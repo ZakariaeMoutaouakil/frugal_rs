@@ -8,11 +8,6 @@ from matplotlib.pyplot import figure, ylabel, plot, legend, grid, savefig, show,
 from numpy import sort, append
 from pandas import DataFrame, read_csv
 
-parser = ArgumentParser(description='Transform dataset')
-parser.add_argument("--dir", type=str, help="results directory", required=True)
-parser.add_argument("--out", type=str, help="output directory", required=True)
-args = parser.parse_args()
-
 
 def process_file(df: DataFrame):
     """Load and process the dataset to calculate certified accuracy for various radii."""
@@ -75,6 +70,11 @@ name_map = {
 
 
 def main():
+    parser = ArgumentParser(description='Transform dataset')
+    parser.add_argument("--dir", type=str, help="results directory", required=True)
+    parser.add_argument("--out", type=str, help="output directory", required=True)
+    args = parser.parse_args()
+
     log_file_name = splitext([f for f in os.listdir(args.dir) if f.endswith('.log')][0])[0]
     dataset_type = log_file_name.split('_')[0]
     dataset = 'Cifar10' if dataset_type == 'cifar10' else 'Imagenet'
