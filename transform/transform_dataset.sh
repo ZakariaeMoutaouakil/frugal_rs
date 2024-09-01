@@ -8,9 +8,9 @@ export PYTHONPATH="$HOME/PycharmProjects/frugal_rs"
 source "$PYTHONPATH/.venv/bin/activate"
 
 # Define the array for sigma values
-sigmas=(0.50 1)
+sigmas=(0.50)
 # Define the array for temperature values
-temperatures=(0.1 0.5 1 2 4 8)
+temperatures=(0.25)
 # Path to the dataset directory
 dataset_path="/home/pc/PycharmProjects/test_results/new"
 # Output directory
@@ -25,7 +25,7 @@ for sigma in "${sigmas[@]}"; do
     # Loop over temperature values
     for temperature in "${temperatures[@]}"; do
         # Loop over num_samples from 100 to 1000 with a step of 100
-        for num_samples in {600..1000..100}; do
+        for num_samples in {100..200..100}; do
             # Construct the file path for the dataset
             file_name="cifar10_${formatted_sigma}.h5"
             full_path="${dataset_path}/${file_name}"
