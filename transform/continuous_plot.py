@@ -198,6 +198,43 @@ def main4():
     plt.show()
 
 
+def main5():
+    methods = ('cp', 'dichotomy')
+    # Number of plots
+    sigmas = (0.12, 0.5, 1)
+    # Create figure and axes
+    fig, axs = plt.subplots(2, 3, figsize=(15, 10))  # 1 row, n columns
+
+    for i in tqdm(range(len(sigmas)), desc='Plotting'):
+        df_folder_path = f'/home/pc/PycharmProjects/test_results/transformed/cifar10_{sigmas[i]:.2f}_100_0.1/'
+        df_paths = tuple(df_folder_path + f'cifar10_{sigmas[i]:.2f}_' + method + '_first.csv' for method in methods)
+        dfs = tuple(pd.read_csv(path) for path in df_paths)
+        labels = tuple(name_map[method] for method in methods)
+
+        ax = axs[0, i]
+        y_label_name = 'First\\ Margin\n Certified Accuracy' if i == 0 else None
+        title_name = f'σ = {sigmas[i]}'
+        plot_multiple_files(ax, dfs, labels, title_name, y_label_name)
+
+        df_paths = tuple(
+            df_folder_path + f'cifar10_{sigmas[i]:.2f}_' + method + '_second.csv' for method in methods if
+            method != 'bernstein'
+        )
+        dfs = tuple(pd.read_csv(path) for path in df_paths)
+        labels = tuple(name_map[method] for method in methods if method != 'bernstein')
+
+        ax = axs[1, i]
+        y_label_name = 'Second\\ Margin\n Certified Accuracy' if i == 0 else None
+        title_name = f'σ = {sigmas[i]}'
+        plot_multiple_files(ax, dfs, labels, title_name, y_label_name)
+
+    # Adjust layout
+    plt.tight_layout()
+
+    # Show plot
+    plt.show()
+
+
 if __name__ == "__main__":
     start_time = time()
     main4()
