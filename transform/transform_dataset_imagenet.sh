@@ -2,7 +2,7 @@
 
 # Set locale to ensure decimal point handling
 export LC_NUMERIC="C"
-export PYTHONPATH="$HOME/PycharmProjects/frugal_rs"
+export PYTHONPATH="$HOME/frugal_rs"
 
 # Activate the virtual environment
 source "$PYTHONPATH/.venv/bin/activate"
