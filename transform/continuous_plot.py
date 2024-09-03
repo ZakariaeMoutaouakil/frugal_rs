@@ -267,5 +267,5 @@ def main6():
 
 if __name__ == "__main__":
     start_time = time()
-    main4()
+    main()
     print(f'Elapsed time: {time() - start_time:.4f} seconds')

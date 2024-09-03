@@ -75,6 +75,7 @@ def main() -> None:
     results_sequence_first: List[Dict[str, str | float]] = []
     results_sequence_bonferroni_first: List[Dict[str, str | float]] = []
 
+    # results_bernstein_second: List[Dict[str, str | float]] = []
     results_bernstein_bonferroni_second: List[Dict[str, str | float]] = []
     results_sequence_second: List[Dict[str, str | float]] = []
     results_sequence_bonferroni_second: List[Dict[str, str | float]] = []
@@ -186,6 +187,48 @@ def main() -> None:
 
         ## Second Radius
         logger.info(f"Second Radius")
+        # # Bernstein
+        # start_time = time()
+        # predicted_class_term = calculate_term(vector=predicted_tensor, alpha=args.alpha / 2)
+        # predicted_class_lower_bound = mean(predicted_tensor).item() - predicted_class_term
+        # if predicted_class_lower_bound >= 1 / 2:
+        #     predicted_quantiles_bernstein = apply_function_to_tensor(x=predicted_tensor, func=quantile_function)
+        #     second_quantiles_bernstein = apply_function_to_tensor(x=predicted_tensor, func=quantile_function)
+        #     difference_quantiles_bernstein = predicted_quantiles_bernstein - second_quantiles_bernstein
+        #     normalized_difference_quantiles_bernstein = difference_quantiles_bernstein / maximum
+        #     normalized_bernstein_term = calculate_term(vector=normalized_difference_quantiles_bernstein,
+        #                                                alpha=args.alpha / 2)
+        #     normalized_bernstein_lb = mean(normalized_difference_quantiles_bernstein).item() - normalized_bernstein_term
+        #     bernstein_lower_bound_second = normalized_bernstein_lb * maximum
+        #     end_time = time()
+        #     results_bernstein_second.append({
+        #         'idx': i,
+        #         'label': label,
+        #         'predicted': predicted,
+        #         'correct': correct,
+        #         'radius': max(0., bernstein_lower_bound_second),
+        #         'time': f"{end_time - start_time:.4f}"
+        #     })
+        #     logger.info("results_bernstein_second")
+        #     logger.debug(results_bernstein_second[-1])
+        # else:
+        #     pred_term = calculate_term(vector=predicted_tensor, alpha=args.alpha / 2)
+        #     second_class_term = calculate_term(vector=second_tensor, alpha=args.alpha / 2)
+        #     pred_lb = mean(predicted_tensor).item() - pred_term
+        #     second_lb = mean(second_tensor).item() + second_class_term
+        #     bernstein_lower_bound_second = pred_lb - second_lb
+        #     end_time = time()
+        #     results_bernstein_second.append({
+        #         'idx': i,
+        #         'label': label,
+        #         'predicted': predicted,
+        #         'correct': correct,
+        #         'radius': max(0., bernstein_lower_bound_second),
+        #         'time': f"{end_time - start_time:.4f}"
+        #     })
+        #     logger.info("results_bernstein_second")
+        #     logger.debug(results_bernstein_second[-1])
+
         # Bernstein + Bonferroni
         start_time = time()
         predicted_term_second = calculate_term(vector=predicted_tensor, alpha=args.alpha / 2)
@@ -267,6 +310,7 @@ def main() -> None:
     df_sequence_first = DataFrame(results_sequence_first)
     df_sequence_bonferroni_first = DataFrame(results_sequence_bonferroni_first)
 
+    # df_bernstein_second = DataFrame(results_bernstein_second)
     df_bernstein_bonferroni_second = DataFrame(results_bernstein_bonferroni_second)
     df_sequence_second = DataFrame(results_sequence_second)
     df_sequence_bonferroni_second = DataFrame(results_sequence_bonferroni_second)
@@ -278,6 +322,7 @@ def main() -> None:
     df_sequence_bonferroni_first.to_csv(args.outdir + '/' + dataset_title + '_sequence_bonferroni_first.csv',
                                         index=False)
 
+    # df_bernstein_second.to_csv(args.outdir + '/' + dataset_title + '_bernstein_second.csv', index=False)
     df_bernstein_bonferroni_second.to_csv(
         args.outdir + '/' + dataset_title + '_bernstein_bonferroni_second.csv',
         index=False)

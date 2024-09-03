@@ -6,15 +6,16 @@ export PYTHONPATH="$HOME/PycharmProjects/frugal_rs"
 
 # Activate the virtual environment
 source "$PYTHONPATH/.venv/bin/activate"
+export IMAGENET_DIR="$HOME/imagenet"
 
 # Define the array for sigma values
-sigmas=(0.12)
+sigmas=(0.25 0.5 1)
 # Define the array for temperature values
-temperatures=(1)
+temperatures=(0.5 1 2)
 # Path to the dataset directory
-dataset_path="/home/pc/PycharmProjects/test_results/new"
+dataset_path="/home/pc/PycharmProjects/test_results"
 # Output directory
-output_dir="/home/pc/PycharmProjects/test_results/transformed_new"
+output_dir="/home/pc/PycharmProjects/test_results/transformed_imagenet"
 mkdir -p "$output_dir"
 
 # Loop over sigma values
@@ -25,14 +26,14 @@ for sigma in "${sigmas[@]}"; do
     # Loop over temperature values
     for temperature in "${temperatures[@]}"; do
         # Loop over num_samples from 100 to 1000 with a step of 100
-        for num_samples in {100..200..100}; do
+        for num_samples in {100..100..0}; do
             # Construct the file path for the dataset
-            file_name="cifar10_${formatted_sigma}.h5"
+            file_name="imagenet_${formatted_sigma}.h5"
             full_path="${dataset_path}/${file_name}"
             echo "Dataset: $full_path"
 
             # Construct the output file path
-            outdir="${output_dir}/cifar10_${formatted_sigma}_${num_samples}_${temperature}/"
+            outdir="${output_dir}/imagenet_${formatted_sigma}_${num_samples}_${temperature}/"
             echo "Output directory: $outdir"
 
             # Create the output directory if it doesn't exist
