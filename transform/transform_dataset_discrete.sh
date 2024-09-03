@@ -36,7 +36,8 @@ for sigma in "${sigmas[@]}"; do
           mkdir -p "$outdir"
 
           # Execute the python command with current loop variables
-          python3 -m clopper.certify_dataset --num_samples "$num_samples" --dataset "$full_path" --outdir "$outdir"
+          python3 -m clopper.certify_dataset --num_samples "$num_samples" --dataset "$full_path" --outdir "$outdir" \
+                  --max_examples 500
     done
 done
 

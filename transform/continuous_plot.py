@@ -206,7 +206,7 @@ def main5():
     fig, axs = plt.subplots(2, 3, figsize=(15, 10))  # 1 row, n columns
 
     for i in tqdm(range(len(sigmas)), desc='Plotting'):
-        df_folder_path = f'/home/pc/PycharmProjects/test_results/transformed/cifar10_{sigmas[i]:.2f}_100_0.1/'
+        df_folder_path = f'/home/pc/PycharmProjects/test_results/transformed_discrete/cifar10_{sigmas[i]:.2f}_100/'
         df_paths = tuple(df_folder_path + f'cifar10_{sigmas[i]:.2f}_' + method + '_first.csv' for method in methods)
         dfs = tuple(pd.read_csv(path) for path in df_paths)
         labels = tuple(name_map[method] for method in methods)
@@ -216,16 +216,46 @@ def main5():
         title_name = f'σ = {sigmas[i]}'
         plot_multiple_files(ax, dfs, labels, title_name, y_label_name)
 
-        df_paths = tuple(
-            df_folder_path + f'cifar10_{sigmas[i]:.2f}_' + method + '_second.csv' for method in methods if
-            method != 'bernstein'
-        )
+        df_paths = tuple(df_folder_path + f'cifar10_{sigmas[i]:.2f}_' + method + '_second.csv' for method in methods)
         dfs = tuple(pd.read_csv(path) for path in df_paths)
-        labels = tuple(name_map[method] for method in methods if method != 'bernstein')
+        labels = tuple(name_map[method] for method in methods)
 
         ax = axs[1, i]
         y_label_name = 'Second\\ Margin\n Certified Accuracy' if i == 0 else None
         title_name = f'σ = {sigmas[i]}'
+        plot_multiple_files(ax, dfs, labels, title_name, y_label_name)
+
+    # Adjust layout
+    plt.tight_layout()
+
+    # Show plot
+    plt.show()
+
+
+def main6():
+    methods = ('cp', 'dichotomy')
+    # Number of plots
+    num_samples = (20, 50, 100)
+    # Create figure and axes
+    fig, axs = plt.subplots(2, 3, figsize=(15, 10))  # 1 row, n columns
+
+    for i in tqdm(range(len(num_samples)), desc='Plotting'):
+        df_folder_path = f'/home/pc/PycharmProjects/test_results/transformed_discrete/cifar10_0.12_{num_samples[i]}/'
+        df_paths = tuple(df_folder_path + f'cifar10_0.12_' + method + '_first.csv' for method in methods)
+        dfs = tuple(pd.read_csv(path) for path in df_paths)
+        labels = tuple(name_map[method] for method in methods)
+
+        ax = axs[0, i]
+        y_label_name = 'First\\ Margin\n Certified Accuracy' if i == 0 else None
+        title_name = f'{num_samples[i]} samples'
+        plot_multiple_files(ax, dfs, labels, title_name, y_label_name)
+
+        df_paths = tuple(df_folder_path + f'cifar10_0.12_' + method + '_second.csv' for method in methods)
+        dfs = tuple(pd.read_csv(path) for path in df_paths)
+        labels = tuple(name_map[method] for method in methods)
+
+        ax = axs[1, i]
+        y_label_name = 'Second\\ Margin\n Certified Accuracy' if i == 0 else None
         plot_multiple_files(ax, dfs, labels, title_name, y_label_name)
 
     # Adjust layout
