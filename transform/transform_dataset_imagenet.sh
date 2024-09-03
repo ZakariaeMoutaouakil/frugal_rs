@@ -13,9 +13,9 @@ sigmas=(0.25 0.5 1)
 # Define the array for temperature values
 temperatures=(0.5 1 2)
 # Path to the dataset directory
-dataset_path="/home/pc/PycharmProjects/test_results"
+dataset_path="$HOME/test_results"
 # Output directory
-output_dir="/home/pc/PycharmProjects/test_results/transformed_imagenet"
+output_dir="$HOME/imagenet_results"
 mkdir -p "$output_dir"
 
 # Loop over sigma values
